@@ -1,29 +1,31 @@
-FROM ubuntu
+FROM ubuntu:14.04
 
-MAINTAINER Mike Gardiner <conversationing@gmail.com>
+MAINTAINER Jaycyb <dev.cyborg@gmail.com>
 
-RUN apt-get update
+RUN echo 'deb http://ppa.launchpad.net/git-core/ppa/ubuntu trusty main \n\
+deb-src http://ppa.launchpad.net/git-core/ppa/ubuntu trusty main' > /etc/apt/sources.list.d/git.list 
 
-RUN apt-get -y install sudo
-RUN apt-get -y install openssh-server
-RUN apt-get -y install git
-
-RUN locale-gen en_US.UTF-8
-RUN dpkg-reconfigure locales
+RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A1715D88E1DF1F24 \
+ && apt-get update \
+ && apt-get upgrade -Vy \
+ && apt-get -y install sudo openssh-server git \
+ && locale-gen en_US.UTF-8 \
+ && dpkg-reconfigure locales
 
 # To avoid annoying "perl: warning: Setting locale failed." errors,
 # do not allow the client to pass custom locals, see:
 # http://stackoverflow.com/a/2510548/15677
 RUN sed -i 's/^AcceptEnv LANG LC_\*$//g' /etc/ssh/sshd_config
 
-RUN mkdir /var/run/sshd
-
-RUN adduser --system --group --shell /bin/sh git
-RUN su git -c "mkdir /home/git/bin"
-
-RUN cd /home/git; su git -c "git clone git://github.com/sitaramc/gitolite";
-RUN cd /home/git/gitolite; su git -c "git checkout 8f1fd8481aaa338a02f5eb2f41dff4f8f1bc96f";
-RUN cd /home/git; su git -c "gitolite/install -ln";
+RUN mkdir /var/run/sshd \
+ && adduser --system --group --shell /bin/sh git \
+ && su git -c "mkdir /home/git/bin" \
+ && cd /home/git \
+ && su git -c "git clone git://github.com/sitaramc/gitolite" \
+ && cd /home/git/gitolite \
+ && su git -c "git checkout 8f1fd8481aaa338a02f5eb2f41dff4f8f1bc96f" \
+ && cd /home/git \
+ && su git -c "gitolite/install -ln" 
 
 # https://github.com/docker/docker/issues/5892
 RUN chown -R git:git /home/git
